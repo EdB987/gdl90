@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
-# simulate_stratux.py
+# simulate_skyradar.py
 #
-"""Stratux Simulator
+"""Skyradar Simulator
 
-This program implements a sender of the GDL-90 data format used by Stratux.
+This program implements a sender of the GDL-90 data format used by Skyradar.
 
 Copyright (c) 2013 by Eric Dey; All rights reserved
 """
@@ -17,9 +17,8 @@ import os
 
 # Default values for options
 #DEF_SEND_ADDR="255.255.255.255"
-DEF_SEND_ADDR="192.168.1.255"
-#DEF_SEND_PORT=43211
-DEF_SEND_PORT=4000 #Stratux
+DEF_SEND_ADDR="10.1.1.255"
+DEF_SEND_PORT=43211
 
 LATLONG_TO_RADIANS = math.pi / 180.0
 RADIANS_TO_NM = 180.0 * 60.0 / math.pi
@@ -50,16 +49,16 @@ def horizontal_speed(distance, seconds):
 
 
 if __name__ == '__main__':
-
-    if 'SEND_ADDR' in os.environ.keys():
+    
+    if 'SEND_ADDR' in list(os.environ.keys()):
         destAddr = os.environ['SEND_ADDR']
     else:
         destAddr = DEF_SEND_ADDR
 
     destPort = int(DEF_SEND_PORT)
 
-    print "Simulating Stratux unit."
-    print "Transmitting to %s:%s" % (destAddr, destPort)
+    print("Simulating Skyradar unit.")
+    print("Transmitting to %s:%s" % (destAddr, destPort))
     
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -68,9 +67,9 @@ if __name__ == '__main__':
     packetTotal = 0
     encoder = gdl90.encoder.Encoder()
     
-    callSign = 'N987EB'
-    latCenter = 30.37
-    longCenter = -96.11
+    callSign = 'N12345'
+    latCenter = 30.456447222222224
+    longCenter = -98.2941888888889
     pathRadius = 0.25  # degrees
     angle = 0.0
     altitude = 0
@@ -78,15 +77,6 @@ if __name__ == '__main__':
     groundspeed = 0
     verticalspeed = 0
     
-    # ADS-B towers:
-    towers = [
-        (29.888890, -97.865556, 'HYI01'),
-        (30.463333, -99.736390, 'TX009'),
-        (31.203056, -97.051111, 'TX021'),
-        (30.586667, -97.682222, 'TX024'),
-        (31.598056, -100.160000, 'TX028'),
-    ]
-
     # traffic tuples: lat, long, alt, hspeed, vspeed, hdg, callSign, address
     traffic = [
         (30.60, -98.00, 3000, 100, 500, 45, 'NBNDT1', 0x000001),
@@ -110,26 +100,16 @@ if __name__ == '__main__':
         angleRadians = (angle / 180.0) * math.pi
         latitude = latCenter - (pathRadius * math.sin(angleRadians))
         longitude = longCenter + (pathRadius * math.cos(angleRadians))
-        altitude = 2500 + 1000 * math.sin(uptime / 5.0)
+        altitude = 2500 + 1000 * math.sin(uptime / 20.0)
         heading = (180 + int(angle)) % 360
         
         distanceMoved = distance_short(latitudePrev, longitudePrev, latitude, longitude)
-        groundspeed = horizontal_speed(distanceMoved, 5.0)
+        groundspeed = horizontal_speed(distanceMoved, 1.0)
         latitudePrev = latitude
         longitudePrev = longitude
         
         # Heartbeat Message
         buf = encoder.msgHeartbeat()
-        s.sendto(buf, (destAddr, destPort))
-        packetTotal += 1
-
-        # Stratux Heartbeat Message
-        buf = encoder.msgStratuxHeartbeat()
-        s.sendto(buf, (destAddr, destPort))
-        packetTotal += 1
-        
-        # Hiltonsoftware SX Heartbeat Message
-        buf = encoder.msgSXHeartbeat(towers=towers)
         s.sendto(buf, (destAddr, destPort))
         packetTotal += 1
         
@@ -158,7 +138,7 @@ if __name__ == '__main__':
         # On-screen status output
         uptime += 1
         if uptime % 10 == 0:
-            print "Uptime %d, lat=%3.6f, long=%3.6f, altitude=%d, heading=%d, angle=%3.3f" % (uptime, latitude, longitude, altitude, heading, angle)
+            print("Uptime %d, lat=%3.6f, long=%3.6f, altitude=%d, heading=%d, angle=%3.3f" % (uptime, latitude, longitude, altitude, heading, angle))
         
         # Delay for the rest of this second
         time.sleep(1.0 - (time.time() - timeStart))

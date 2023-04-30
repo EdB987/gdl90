@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # simulate_stratux.py
 #
@@ -17,9 +17,8 @@ import os
 
 # Default values for options
 #DEF_SEND_ADDR="255.255.255.255"
-DEF_SEND_ADDR="192.168.1.255"
-#DEF_SEND_PORT=43211
-DEF_SEND_PORT=4000 #Stratux
+DEF_SEND_ADDR="10.1.1.255"
+DEF_SEND_PORT=4000
 
 LATLONG_TO_RADIANS = math.pi / 180.0
 RADIANS_TO_NM = 180.0 * 60.0 / math.pi
@@ -51,15 +50,15 @@ def horizontal_speed(distance, seconds):
 
 if __name__ == '__main__':
 
-    if 'SEND_ADDR' in os.environ.keys():
+    if 'SEND_ADDR' in list(os.environ.keys()):
         destAddr = os.environ['SEND_ADDR']
     else:
         destAddr = DEF_SEND_ADDR
 
     destPort = int(DEF_SEND_PORT)
 
-    print "Simulating Stratux unit."
-    print "Transmitting to %s:%s" % (destAddr, destPort)
+    print("Simulating Stratux unit.")
+    print("Transmitting to %s:%s" % (destAddr, destPort))
     
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -68,9 +67,9 @@ if __name__ == '__main__':
     packetTotal = 0
     encoder = gdl90.encoder.Encoder()
     
-    callSign = 'N987EB'
-    latCenter = 30.37
-    longCenter = -96.11
+    callSign = 'N12345'
+    latCenter = 30.456447222222224
+    longCenter = -98.2941888888889
     pathRadius = 0.25  # degrees
     angle = 0.0
     altitude = 0
@@ -110,11 +109,11 @@ if __name__ == '__main__':
         angleRadians = (angle / 180.0) * math.pi
         latitude = latCenter - (pathRadius * math.sin(angleRadians))
         longitude = longCenter + (pathRadius * math.cos(angleRadians))
-        altitude = 2500 + 1000 * math.sin(uptime / 5.0)
+        altitude = 2500 + 1000 * math.sin(uptime / 20.0)
         heading = (180 + int(angle)) % 360
         
         distanceMoved = distance_short(latitudePrev, longitudePrev, latitude, longitude)
-        groundspeed = horizontal_speed(distanceMoved, 5.0)
+        groundspeed = horizontal_speed(distanceMoved, 1.0)
         latitudePrev = latitude
         longitudePrev = longitude
         
@@ -158,7 +157,7 @@ if __name__ == '__main__':
         # On-screen status output
         uptime += 1
         if uptime % 10 == 0:
-            print "Uptime %d, lat=%3.6f, long=%3.6f, altitude=%d, heading=%d, angle=%3.3f" % (uptime, latitude, longitude, altitude, heading, angle)
+            print("Uptime %d, lat=%3.6f, long=%3.6f, altitude=%d, heading=%d, angle=%3.3f" % (uptime, latitude, longitude, altitude, heading, angle))
         
         # Delay for the rest of this second
         time.sleep(1.0 - (time.time() - timeStart))
